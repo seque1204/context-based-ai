@@ -1,15 +1,16 @@
-import { login, signup, signInWithGoogle } from './actions'
+import { createClient } from '@/utils/supabase/server'
+import { redirect } from 'next/navigation'
+import AuthComponent from '@/components/UI/AuthComponent'
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getSession();
+  if (data?.session) {
+    console.log('User authenticated', data.session.user);
+    return redirect('/');
+  }
+  console.log('Non Authenticated user');
   return (
-    <form>
-      <label htmlFor="email">Email:</label>
-      <input id="email" name="email" type="email" required />
-      <label htmlFor="password">Password:</label>
-      <input id="password" name="password" type="password" required />
-      <button formAction={login}>Log in</button>
-      <button formAction={signup}>Sign up</button>
-      <button type="button" onClick={signInWithGoogle}>Sign in with Google</button>
-    </form>
-  )
+    <AuthComponent />
+  );
 }

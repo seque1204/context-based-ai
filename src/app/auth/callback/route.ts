@@ -11,5 +11,6 @@ export async function GET(request: NextRequest) {
   await supabase.auth.exchangeCodeForSession(code)
   // Optionally, you can check the user here:
   const { data, error } = await supabase.auth.getUser()
-  return NextResponse.redirect(`${process.env.NEXT_PUBLIC_URL}/private`)
+  // Redirect to the home page or a specific route after successful login
+  return NextResponse.redirect(`${process.env.NEXT_PUBLIC_URL}/`)
 }
