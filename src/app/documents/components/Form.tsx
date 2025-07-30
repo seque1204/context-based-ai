@@ -42,10 +42,19 @@ export default function Form() {
                 const embedding = result.embedding;
                 const token = result.token;
                 const client = await supabase;
+                const { data: { user } } = await client.auth.getUser();
+                const { data:  userRow, error: userError }  = await client
+                    .from("users")
+                    .select("school_id")
+                    .eq("id", user?.id)
+                    .single();
                 const { error } = await client.from("documents").insert({
                     content,
                     embedding,
-                    token
+                    token,
+                    user_id: user?.id,
+                    created_at : new Date().toISOString(),
+                    school_id : userRow?.school_id,
                 });
 
                 if (error) {

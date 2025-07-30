@@ -20,19 +20,19 @@ export default async function Page() {
     .eq("id", data.user.id)
     .single()
 
-  if (user?.role !== 'admin') {
+  if (!user?.role || !/admin/i.test(user.role)) {
     console.log('User is not an admin:', user?.role)
     return redirect('/')
   }
   return (
     <div className="max-w-4xl mx-auto h-screen flex justify-center items-center">
-			<div className="w-full p-5 space-y-3">
-				<div className="flex items-center gap-2">
-					<BsDatabase className="w-5 h-5" />
-					<h1>Daily AI dataset</h1>
-				</div>
-				<Form />
-			</div>
-		</div>
-	);
+      <div className="w-full p-5 space-y-3">
+        <div className="flex items-center gap-2">
+          <BsDatabase className="w-5 h-5" />
+          <h1>Daily AI dataset</h1>
+        </div>
+        <Form />
+      </div>
+    </div>
+  );
 }
