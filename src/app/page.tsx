@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import Search from '@/app/components/Search'
+import Search from './components/Search'
 import React from 'react'
 
 export default async function Page() {
@@ -14,8 +14,8 @@ export default async function Page() {
 
 
   return (
-    <div className=" max-w-5xl mx-auto h-screen flex justify-center items-center">
-      <div className=" w-full h-80vh rounded-sm shadow-sm border flex flex-col p-5">
+    <div className=" h-screen flex justify-center">
+      <div className="max-w-5xl w-full h-80vh rounded-sm shadow-sm border flex flex-col p-5 ">
         <Search />
       </div>
     </div>
