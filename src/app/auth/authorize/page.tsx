@@ -9,38 +9,48 @@ export default function Authorize() {
   const supabase = createClient()
 
   useEffect(() => {
-    const checkVerification = async () => {
-      try {
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser()
-        
-        if (user) {
-          // Check verification status in your users table
-          const { data: userData } = await supabase
-            .from("users")
-            .select("Verified")
-            .eq("id", user.id)
-            .single()
+    const setupRealTimeSubscription = async () => {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        // Check initial verification status
+        const { data: userData } = await supabase
+          .from("users")
+          .select("Verified")
+          .eq("id", user.id)
+          .single()
 
-          if (userData?.Verified) {
-            // User is verified, redirect to main page
-            router.push('/')
-            return
-          }
+        if (userData?.Verified) {
+          router.push('/')
+          return
         }
-      } catch (error) {
-        console.error('Error checking verification:', error)
+
+        // Subscribe to real-time changes on YOUR users table
+        const subscription = supabase
+          .channel(`user-verification-${user.id}`)
+          .on('postgres_changes', {
+            event: 'UPDATE',           // Listen for updates
+            schema: 'public',          // Your database schema
+            table: 'users',            // YOUR custom users table
+            filter: `id=eq.${user.id}` // Only for this specific user
+          }, (payload) => {
+            console.log('Real-time update received:', payload)
+            // When Verified changes to true, redirect
+            if (payload.new.Verified === true) {
+              router.push('/')
+            }
+          })
+          .subscribe()
+
+        // Cleanup subscription
+        return () => {
+          subscription.unsubscribe()
+        }
       }
     }
 
-    // Check immediately
-    checkVerification()
-
-    // Set up polling every 3 seconds
-    const interval = setInterval(checkVerification, 3000)
-
-    // Cleanup interval on component unmount
-    return () => clearInterval(interval)
+    setupRealTimeSubscription()
   }, [router, supabase])
 
   return (
@@ -51,7 +61,7 @@ export default function Authorize() {
         </h1>
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
         <p className="text-sm text-gray-600 mt-4">
-          We're checking your verification status...
+          We're waiting for approval...
         </p>
       </div>
     </div>
