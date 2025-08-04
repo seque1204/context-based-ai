@@ -11,6 +11,21 @@ export async function GET(request: NextRequest) {
   await supabase.auth.exchangeCodeForSession(code)
   // Optionally, you can check the user here:
   const { data, error } = await supabase.auth.getUser()
-  // Redirect to the home page or a specific route after successful login
+  
+  // Check user role in the database
+  const { data: user, error: userError } = await supabase
+    .from("users")
+    .select("Verified")
+    .eq("id", data?.user?.id)  // Match by user ID
+    .single()
+
+  if (userError || !user?.Verified) {
+    console.log('User is not verified:', user?.Verified)
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_URL}/auth/authorize`)
+  }
+
+  // If verified, redirect to home
   return NextResponse.redirect(`${process.env.NEXT_PUBLIC_URL}/`)
+
+  
 }

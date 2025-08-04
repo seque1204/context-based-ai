@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
+import { NextResponse } from 'next/server'
 import Search from './components/Search'
 import React from 'react'
 
@@ -11,6 +12,16 @@ export default async function Page() {
     return redirect('/login');
   }
   console.log('Authenticated user:', data.user.email);
+
+  const { data: user } = await supabase
+    .from("users")
+    .select("Verified")
+    .eq("id", data.user.id)
+    .single();
+  if (!user?.Verified) {
+    console.log('User is not verified:', user?.Verified)
+    return redirect('/auth/authorize');
+  }
 
 
   return (
