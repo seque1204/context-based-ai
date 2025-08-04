@@ -4,7 +4,7 @@ import AuthComponent from '@/components/ui/AuthComponent'
 
 export default async function LoginPage() {
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.getSession();
+  const { data } = await supabase.auth.getSession();
   if (data?.session) {
     console.log('User authenticated', data.session.user);
     return redirect('/');
