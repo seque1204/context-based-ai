@@ -43,7 +43,7 @@ export default function Form() {
                 const token = result.token;
                 const client = await supabase;
                 const { data: { user } } = await client.auth.getUser();
-                const { data:  userRow, error: userError }  = await client
+                const { data:  userRow }  = await client
                     .from("users")
                     .select("school_id")
                     .eq("id", user?.id)

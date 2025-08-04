@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   const supabase = await createClient()
   await supabase.auth.exchangeCodeForSession(code)
   // Optionally, you can check the user here:
-  const { data, error } = await supabase.auth.getUser()
+  const { data } = await supabase.auth.getUser()
   
   // Check user role in the database
   const { data: user, error: userError } = await supabase

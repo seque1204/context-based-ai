@@ -4,7 +4,6 @@ import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 
 export default function Authorize() {
-  const [isChecking, setIsChecking] = useState(true)
   const router = useRouter()
   const supabase = createClient()
 
@@ -61,7 +60,7 @@ export default function Authorize() {
         </h1>
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
         <p className="text-sm text-gray-600 mt-4">
-          We're waiting for approval...
+          We&apos;re waiting for approval...
         </p>
       </div>
     </div>
