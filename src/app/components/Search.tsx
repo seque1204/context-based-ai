@@ -59,10 +59,11 @@ export default function Search() {
       "match_documents",
       {
         query_embedding: data.embedding,
-        match_threshold: 0.3,
+        match_threshold: 0.35,
         match_count: 3,
       }
     );
+    console.log(documents);
 
     // 3. Build context string (limit tokens if needed)
     let tokenCount = 0;
