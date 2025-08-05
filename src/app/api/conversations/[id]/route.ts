@@ -3,7 +3,10 @@ import { createClient } from '@/utils/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Get a single conversation by id
-export async function GET(req: NextRequest, context: { params: { id: string } }) {
+export async function GET(
+    req: NextRequest, 
+    { params }: { params: { id: string } }
+) {
   const supabase = await createClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (!user || userError) {
@@ -13,7 +16,7 @@ export async function GET(req: NextRequest, context: { params: { id: string } })
   const { data, error } = await supabase
     .from('conversations')
     .select('id, title, created_at, updated_at')
-    .eq('id', context.params.id)
+    .eq('id', params.id)
     .eq('user_id', user.id)
     .single();
 
@@ -24,14 +27,16 @@ export async function GET(req: NextRequest, context: { params: { id: string } })
 }
 
 // Update conversation title
-export async function PATCH(req: NextRequest, context: { params: { id: string } }) {
+export async function PATCH(
+    req: NextRequest, 
+    { params }: { params: { id: string } }
+) {
   const supabase = await createClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (!user || userError) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id } = context.params;
   const { title } = await req.json();
   if (!title || typeof title !== 'string') {
     return NextResponse.json({ error: 'Title is required' }, { status: 400 });
@@ -40,7 +45,7 @@ export async function PATCH(req: NextRequest, context: { params: { id: string } 
   const { data, error } = await supabase
     .from('conversations')
     .update({ title })
-    .eq('id', id)
+    .eq('id', params.id)
     .eq('user_id', user.id)
     .select('id, title, created_at, updated_at')
     .single();
@@ -52,18 +57,19 @@ export async function PATCH(req: NextRequest, context: { params: { id: string } 
 }
 
 // Delete a conversation
-export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(
+    req: NextRequest, 
+    { params }: { params: { id: string } }) {
   const supabase = await createClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
   if (!user || userError) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id } = context.params;
   const { error } = await supabase
     .from('conversations')
     .delete()
-    .eq('id', id)
+    .eq('id', params.id)
     .eq('user_id', user.id);
 
   if (error) {

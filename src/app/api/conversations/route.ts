@@ -3,11 +3,7 @@ import { createClient } from '@/utils/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
 // List all conversations for the authenticated user
-export async function GET(
-    req: NextRequest,
-    context: { params: { id: string } }
-) {
-    const {id} = context.params;
+export async function GET(req: NextRequest) {
     const supabase = await createClient();
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (!user || userError) {
