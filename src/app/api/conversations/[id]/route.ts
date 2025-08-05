@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // Get a single conversation by id
 export async function GET(
     req: NextRequest, 
-    context: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -12,7 +12,7 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id } = context.params;
+  const { id } = await params;
 
   const { data, error } = await supabase
     .from('conversations')
@@ -30,7 +30,7 @@ export async function GET(
 // Update conversation title
 export async function PATCH(
     req: NextRequest, 
-    context: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -43,7 +43,7 @@ export async function PATCH(
     return NextResponse.json({ error: 'Title is required' }, { status: 400 });
   }
 
-  const { id } = context.params;
+  const { id } =  await params;
 
   const { data, error } = await supabase
     .from('conversations')
@@ -62,7 +62,7 @@ export async function PATCH(
 // Delete a conversation
 export async function DELETE(
     req: NextRequest, 
-    context: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient();
   const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -70,7 +70,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id } = context.params;
+  const { id } = await params;
 
   const { error } = await supabase
     .from('conversations')
