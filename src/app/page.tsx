@@ -1,17 +1,16 @@
-import { createClient } from '@/utils/supabase/server'
-import { redirect } from 'next/navigation'
-import Search from './components/Search'
-import React from 'react'
+import { createClient } from '@/utils/supabase/server';
+import { redirect } from 'next/navigation';
+import ConversationsPageClient from './ConversationsPageClient';
+import React from 'react';
 
 export default async function Page() {
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data?.user) {
-    console.log('User not authenticated:', error);
+  const {data} = await supabase.auth.getUser();
+  if (!data?.user) {
     return redirect('/login');
   }
-  console.log('Authenticated user:', data.user.email);
 
+  console.log('Authenticated user:', data.user.id);
   const { data: user } = await supabase
     .from("users")
     .select("Verified")
@@ -22,12 +21,5 @@ export default async function Page() {
     return redirect('/auth/authorize');
   }
 
-
-  return (
-    <div className=" h-screen flex justify-center">
-      <div className="max-w-5xl w-full h-80vh rounded-sm shadow-sm border flex flex-col p-5 ">
-        <Search />
-      </div>
-    </div>
-  );
+  return <ConversationsPageClient />;
 }

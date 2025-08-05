@@ -3,18 +3,53 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input'
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
-import React, { useRef, useState } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { SiAseprite } from "react-icons/si";
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 
-export default function Search() {
+
+interface SearchProps {
+  conversationId: string | null;
+}
+
+export default function Search({ conversationId }: SearchProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
-  const [questions, setQuestions] = useState<string[]>([]);
-  const [answers, setAnswers] = useState<string[]>([]);
+  interface Message {
+    role: string;
+    content: string;
+  }
+  const [messages, setMessages] = useState<Message[]>([]);
   const supabase = createClient();
+  // Ref for auto-scroll
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
+  // Load messages when conversationId changes
+  useEffect(() => {
+    if (!conversationId) {
+      setMessages([]);
+      return;
+    }
+    setLoading(true);
+    fetch(`/api/messages/${conversationId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.messages) {
+          setMessages(data.messages.map((msg: any) => ({ role: msg.role, content: msg.content })));
+        } else {
+          setMessages([]);
+        }
+        setLoading(false);
+      });
+  }, [conversationId]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -30,11 +65,20 @@ export default function Search() {
   };
 
   const handleSearch = async () => {
+    if (!conversationId) {
+      showToast("Please select or create a conversation first.", "error");
+      return;
+    }
     const searchText = inputRef.current?.value;
     if (!searchText || !searchText.trim()) return;
 
+
     setLoading(true);
-    setQuestions(prev => [...prev, searchText]);
+    // Add user message and placeholder assistant message before building history
+    setMessages(prev => {
+      const updated = [...prev, { role: 'user', content: searchText }, { role: 'assistant', content: '' }];
+      return updated;
+    });
     if (inputRef.current) inputRef.current.value = "";
 
     // 1. Get embedding
@@ -47,7 +91,17 @@ export default function Search() {
 
     if (res.status !== 200) {
       showToast("Failed to create embedding: " + res.statusText, "error");
-      setAnswers(prev => [...prev, "Sorry, something went wrong."]);
+      setMessages(prev => {
+        const updated = [...prev];
+        // Find the last assistant message (placeholder) and update its content
+        for (let i = updated.length - 1; i >= 0; i--) {
+          if (updated[i].role === 'assistant' && updated[i].content === '') {
+            updated[i] = { ...updated[i], content: 'Sorry, something went wrong.' };
+            break;
+          }
+        }
+        return updated;
+      });
       setLoading(false);
       return;
     }
@@ -63,9 +117,6 @@ export default function Search() {
         match_count: 3,
       }
     );
-    console.log(documents);
-
-    // 3. Build context string (limit tokens if needed)
     let tokenCount = 0;
     let contextText = "";
     for (let i = 0; i < (documents?.length || 0); i++) {
@@ -76,23 +127,19 @@ export default function Search() {
       contextText += `${content.trim()}\n--\n`;
     }
 
+    // 3. Build history from updated messages
+    // Use a ref to always get the latest messages
+    const getLatestMessages = () => {
+      // This will be called inside setMessages below
+      return [
+        ...messages,
+        { role: 'user', content: searchText },
+        { role: 'assistant', content: '' },
+      ];
+    };
+    const history = getLatestMessages().filter(m => m.role && m.content !== undefined);
+
     // 4. Stream answer from /chat
-    // 4. Always stream answer from /chat, even if contextText is empty
-    let answer = "";
-    setAnswers(prev => [...prev, ""]); // Placeholder for streaming
-    const history = [];
-    for (let i = 0; i < questions.length; i++) {
-      history.push({
-        role: "user",
-        content: questions[i],
-      });
-      if (answers[i]) {
-        history.push({
-          role: "assistant",
-          content: answers[i],
-        });
-      }
-    }
     const response = await fetch("/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -105,71 +152,121 @@ export default function Search() {
 
     if (!response.body) {
       showToast("Failed to get answer from chat service", "error");
-      setAnswers(prev => {
+      setMessages(prev => {
         const updated = [...prev];
-        updated[updated.length - 1] = "Sorry, something went wrong.";
+        // Find the last assistant message (placeholder) and update its content
+        for (let i = updated.length - 1; i >= 0; i--) {
+          if (updated[i].role === 'assistant' && updated[i].content === '') {
+            updated[i] = { ...updated[i], content: 'Sorry, something went wrong.' };
+            break;
+          }
+        }
         return updated;
       });
       setLoading(false);
       return;
     }
 
+    // 5. Save user message to DB
+    await fetch("/api/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        conversation_id: conversationId,
+        role: "user",
+        content: searchText,
+      }),
+    });
+
+
+    // 6. Stream and save assistant message
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let done = false;
+    let streamedAnswer = "";
+    // Use a ref to avoid stale closure
+    const streamedAnswerRef = { current: "" };
     while (!done) {
       const { value, done: doneReading } = await reader.read();
       done = doneReading;
       if (value) {
-        answer += decoder.decode(value);
-        setAnswers(prev => {
+        streamedAnswerRef.current += decoder.decode(value);
+        streamedAnswer = streamedAnswerRef.current;
+        setMessages(prev => {
           const updated = [...prev];
-          updated[updated.length - 1] = answer;
+          // Find the last assistant message (placeholder) and update its content
+          for (let i = updated.length - 1; i >= 0; i--) {
+            if (updated[i].role === 'assistant') {
+              updated[i] = { ...updated[i], content: streamedAnswer };
+              break;
+            }
+          }
           return updated;
         });
       }
     }
+
+    // Save assistant message to DB
+    await fetch("/api/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        conversation_id: conversationId,
+        role: "assistant",
+        content: streamedAnswer,
+      }),
+    });
+
     setLoading(false);
   };
 
-  return <>
-    <div className="flex-1 h-80vh overflow-y-auto space-y-10">
-      <div className="flex items-center justify-between border-b pb-3">
+  return (
+    <div className="flex flex-col h-full w-full">
+      <div className="flex items-center justify-between border-b pb-3 px-2">
         <div className="flex items-center gap-2">
           <SiAseprite className="w-5 h-5" />
           <h1>CustomAI</h1>
         </div>
         <Button onClick={handleLogout}> Logout </Button>
       </div>
-
-      {questions.map((question, index) => {
-        const answer = answers[index];
-        const isLoading = loading && index === questions.length - 1 && !answer;
-        return (
-          <div className="space-y-3" key={index}>
-            <div className="flex items-center gap-2 text-indigo-500">
-              <SiAseprite className="w-5 h-5" />
-              <h1>{question}</h1>
-            </div>
-            {isLoading ? (
-              <h1>Loading...</h1>
-            ) : (
-              <div className="prose max-w-none">
-                <ReactMarkdown>{answer}</ReactMarkdown>
+      <div className="flex-1 overflow-y-auto space-y-10 px-2 py-4">
+        {messages.map((msg, index) => {
+          const isUser = msg.role === 'user';
+          const isLoading = loading && index === messages.length - 1 && msg.role === 'assistant' && !msg.content;
+          return (
+            <div className="space-y-3" key={index}>
+              <div className={`flex items-center gap-2 ${isUser ? 'text-indigo-500' : 'text-green-700'}`}>
+                <SiAseprite className="w-5 h-5" />
+                {isUser ? (
+                  <h1>{msg.content}</h1>
+                ) : null}
               </div>
-            )}
-          </div>
-        );
-      })}
+              {isLoading && (
+                <h1>Loading...</h1>
+              )}
+              {!isUser && msg.content && !isLoading && (
+                <div className="prose max-w-none">
+                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {/* Auto-scroll anchor */}
+        <div ref={bottomRef} />
+      </div>
+      <div className="border-t px-2 bg-white">
+        <Input
+          ref={inputRef}
+          placeholder="Ask me a question"
+          className="p-5"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSearch();
+            }
+          }}
+        />
+      </div>
     </div>
-    <Input
-      ref={inputRef}
-      placeholder="Ask me a question"
-      className="p-5"
-      onKeyDown={(e) => {
-        if (e.key === "Enter") {
-          handleSearch();
-        }
-      }} />
-  </>
+  );
 }
