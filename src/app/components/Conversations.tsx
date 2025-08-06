@@ -12,13 +12,12 @@ interface Conversation {
 interface ConversationsProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
-  onNew: (id: string) => void;
+  onNew: () => void;
 }
 
 export default function Conversations({ selectedId, onSelect, onNew }: ConversationsProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(false);
-  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     fetchConversations();
@@ -33,30 +32,14 @@ export default function Conversations({ selectedId, onSelect, onNew }: Conversat
   }
 
   async function handleNewConversation() {
-    setCreating(true);
-    const title = prompt("Enter a title for the new conversation:");
-    if (!title) {
-      setCreating(false);
-      return;
-    }
-    const res = await fetch("/api/conversations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title }),
-    });
-    const data = await res.json();
-    setCreating(false);
-    if (data.conversation) {
-      setConversations([data.conversation, ...conversations]);
-      onNew(data.conversation.id);
-    }
+    onNew();
   }
 
   return (
     <div className="w-64 border-r h-full flex flex-col">
       <div className="flex items-center justify-between p-3 border-b">
         <span className="font-bold">Conversations</span>
-        <Button size="sm" onClick={handleNewConversation} disabled={creating}>
+        <Button size="sm" onClick={handleNewConversation}>
           +
         </Button>
       </div>

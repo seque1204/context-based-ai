@@ -6,10 +6,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
+    { params }: { params: Promise<{ conversation_id: string }> }
 ) {
-    const { id } = await params;
-    const conversation_id = id;
+    const { conversation_id } = await params;
     const supabase = await createClient();
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (!user || userError) {

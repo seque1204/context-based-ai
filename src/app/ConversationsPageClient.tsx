@@ -11,9 +11,9 @@ export default function ConversationsPageClient() {
   return (
     <div className="h-screen flex justify-center">
       <div className="max-w-5xl w-full h-80vh rounded-sm shadow-sm border flex flex-row p-0 ">
-        <Conversations selectedId={selectedId} onSelect={handleSelect} onNew={handleNew} />
+        <Conversations selectedId={selectedId} onSelect={handleSelect} onNew={() => setSelectedId(null)} />
         <div className="flex-1 p-5">
-          <Search conversationId={selectedId} />
+          <Search conversationId={selectedId} onNewConversation={setSelectedId}/>
         </div>
       </div>
     </div>

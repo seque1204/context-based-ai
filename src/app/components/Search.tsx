@@ -11,17 +11,27 @@ import ReactMarkdown from 'react-markdown';
 
 interface SearchProps {
   conversationId: string | null;
+  onNewConversation?: (id: string) => void;
 }
 
-export default function Search({ conversationId }: SearchProps) {
+export default function Search({ conversationId, onNewConversation }: SearchProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
+  const isNewChat = conversationId === null;
+  const [messages, setMessages] = useState<Message[]>([]);
+  const messagesRef = useRef<Message[]>([]);
+  const [pending, setPending] = useState(false);
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
+  const [streaming, setStreaming] = useState(false);
+
+  // Ref to cancel streaming if user switches chats
+  const cancelStreamRef = useRef(false);
   interface Message {
     role: string;
     content: string;
   }
-  const [messages, setMessages] = useState<Message[]>([]);
+
   const supabase = createClient();
   // Ref for auto-scroll
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -31,11 +41,46 @@ export default function Search({ conversationId }: SearchProps) {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+  // Auto-submit pending message when conversationId updates after new chat creation
+  useEffect(() => {
+    if (pendingMessage && conversationId) {
+      // Add user message and assistant placeholder to UI
+      setMessages(prev => {
+        // Only add if not already present (prevents duplicate flicker)
+        if (
+          prev.length === 0 ||
+          prev[prev.length - 1].role !== 'assistant' ||
+          prev[prev.length - 1].content !== ''
+        ) {
+          return [
+            ...prev,
+            { role: 'user', content: pendingMessage },
+            { role: 'assistant', content: '' }
+          ];
+        }
+        return prev;
+      });
+      if (inputRef.current) inputRef.current.value = pendingMessage;
+      const msg = pendingMessage;
+      setPendingMessage(null); // Clear before calling handleSearch
+      // Call handleSearch after a tick to allow state to update
+      setTimeout(() => {
+        handleSearch();
+      }, 0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId]);
+  // Reset pending and cancel streaming when switching chats
+  useEffect(() => {
+    if (pending) {
+      cancelStreamRef.current = true;
+    }
+    setPending(false);
+  }, [conversationId]);
 
   // Load messages when conversationId changes
   useEffect(() => {
-    if (!conversationId) {
-      setMessages([]);
+    if (!conversationId || pending) {
       return;
     }
     setLoading(true);
@@ -49,7 +94,7 @@ export default function Search({ conversationId }: SearchProps) {
         }
         setLoading(false);
       });
-  }, [conversationId]);
+  }, [conversationId, pending]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -65,18 +110,82 @@ export default function Search({ conversationId }: SearchProps) {
   };
 
   const handleSearch = async () => {
-    if (!conversationId) {
-      showToast("Please select or create a conversation first.", "error");
-      return;
-    }
-    const searchText = inputRef.current?.value;
-    if (!searchText || !searchText.trim()) return;
-
+    if (loading || pending) return; // Prevent multiple submissions
 
     setLoading(true);
-    // Add user message and placeholder assistant message before building history
+    setPending(true);
+
+    let convId = conversationId;
+    let createdNewConversation = false;
+    let searchText = inputRef.current?.value;
+    if (!searchText || !searchText.trim()) {
+      setLoading(false);
+      setPending(false);
+      return;
+    }
+
+    cancelStreamRef.current = false;
+
+    if (isNewChat) {
+      // 1. Generate title
+      const titleRes = await fetch("/api/generate-title", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: searchText }),
+      });
+      const { title } = await titleRes.json();
+
+      // 2. Create conversation
+      const convRes = await fetch("/api/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      const { id: newConvId } = await convRes.json();
+
+      // 3. Store the pending message and notify parent
+      setPendingMessage(searchText);
+      if (onNewConversation && typeof newConvId === 'string') {
+        onNewConversation(newConvId);
+        setPending(false);
+        setLoading(false);
+        return; // Wait for conversationId to update, then auto-submit
+      }
+    }
+    // GUARD: If convId is still not set, abort
+    if (!convId) {
+      showToast("Could not determine conversation ID", "error");
+      setLoading(false);
+      setPending(false);
+      return;
+    }
+
+    // 4.5. Reload messages from DB (optional but best practice)
+    const dbRes1 = await fetch(`/api/messages/${convId}`);
+    const dbData = await dbRes1.json();
+    const dbMessages = dbData.messages || [];
+    // Sanitize DB messages
+    const sanitizedDbMessages = dbMessages.map((m: { role: any; content: any; }) => ({
+      role: m.role,
+      content: m.content
+    }));
+
+    console.log("DB messages:", sanitizedDbMessages);
+    // 5. Build history for /chat: all DB messages + new user message (no assistant placeholder)
+    const lastSanitized = sanitizedDbMessages[sanitizedDbMessages.length - 1];
+    const isDuplicate =
+      lastSanitized &&
+      lastSanitized.role === 'user' &&
+      lastSanitized.content?.trim() === searchText.trim();
+
+    const history = [
+      ...sanitizedDbMessages,
+      ...(!isDuplicate ? [{ role: 'user', content: searchText }] : [])
+    ];
+    // 6. Add user message and placeholder assistant message before building history
     setMessages(prev => {
       const updated = [...prev, { role: 'user', content: searchText }, { role: 'assistant', content: '' }];
+      messagesRef.current = updated;
       return updated;
     });
     if (inputRef.current) inputRef.current.value = "";
@@ -127,29 +236,19 @@ export default function Search({ conversationId }: SearchProps) {
       contextText += `${content.trim()}\n--\n`;
     }
 
-    // 3. Build history from updated messages
-    // Use a ref to always get the latest messages
-    const getLatestMessages = () => {
-      // This will be called inside setMessages below
-      return [
-        ...messages,
-        { role: 'user', content: searchText },
-        { role: 'assistant', content: '' },
-      ];
-    };
-    const history = getLatestMessages().filter(m => m.role && m.content !== undefined);
-
     // 4. Stream answer from /chat
+    console.log("History sent to /chat:", history);
     const response = await fetch("/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        question: searchText,
+        content: searchText,
         context: contextText, // will be "" if no context
         history: history,
       }),
     });
-
+    console.log("Response from /chat:", response);
+    console.log("Response body:", response.body);
     if (!response.body) {
       showToast("Failed to get answer from chat service", "error");
       setMessages(prev => {
@@ -166,20 +265,8 @@ export default function Search({ conversationId }: SearchProps) {
       setLoading(false);
       return;
     }
-
-    // 5. Save user message to DB
-    await fetch("/api/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        conversation_id: conversationId,
-        role: "user",
-        content: searchText,
-      }),
-    });
-
-
     // 6. Stream and save assistant message
+    setStreaming(true);
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let done = false;
@@ -189,37 +276,66 @@ export default function Search({ conversationId }: SearchProps) {
     while (!done) {
       const { value, done: doneReading } = await reader.read();
       done = doneReading;
-      if (value) {
+      console.log("Received chunk 1:", value, "cancelStreamRef.current:", cancelStreamRef.current);
+      if (value && !cancelStreamRef.current) {
+        console.log("Received chunk 2:", value);
         streamedAnswerRef.current += decoder.decode(value);
         streamedAnswer = streamedAnswerRef.current;
         setMessages(prev => {
-          const updated = [...prev];
-          // Find the last assistant message (placeholder) and update its content
-          for (let i = updated.length - 1; i >= 0; i--) {
-            if (updated[i].role === 'assistant') {
-              updated[i] = { ...updated[i], content: streamedAnswer };
-              break;
-            }
-          }
+          const lastAssistantIdx = [...prev].reverse().findIndex(m => m.role === 'assistant');
+          if (lastAssistantIdx === -1) return prev;
+          const idx = prev.length - 1 - lastAssistantIdx;
+          const updated = prev.map((msg, i) =>
+            i === idx ? { ...msg, content: streamedAnswerRef.current } : msg
+          );
           return updated;
         });
       }
     }
+    setStreaming(false);
+    // 4. Save user message to DB
+    await fetch("/api/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        conversation_id: convId,
+        role: "user",
+        content: searchText,
+      }),
+    });
 
     // Save assistant message to DB
     await fetch("/api/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        conversation_id: conversationId,
+        conversation_id: convId,
         role: "assistant",
         content: streamedAnswer,
       }),
     });
-
+    // After saving assistant message to DB
     setLoading(false);
+    setPending(false);
   };
 
+  if (isNewChat) {
+    return (
+      <div className="flex flex-col h-full w-full items-center justify-center">
+        <div className="text-gray-400 text-lg mb-4">Start a new conversation</div>
+        <Input
+          ref={inputRef}
+          placeholder="Ask me a question"
+          className="p-5 w-full max-w-md"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSearch();
+            }
+          }}
+        />
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col h-full w-full">
       <div className="flex items-center justify-between border-b pb-3 px-2">
@@ -232,7 +348,9 @@ export default function Search({ conversationId }: SearchProps) {
       <div className="flex-1 overflow-y-auto space-y-10 px-2 py-4">
         {messages.map((msg, index) => {
           const isUser = msg.role === 'user';
-          const isLoading = loading && index === messages.length - 1 && msg.role === 'assistant' && !msg.content;
+          // Only show loading for the last assistant message with empty content and while loading
+          const isLastAssistant = msg.role === 'assistant' && index === messages.length - 1;
+          const isLoading = loading && isLastAssistant && !msg.content;
           return (
             <div className="space-y-3" key={index}>
               <div className={`flex items-center gap-2 ${isUser ? 'text-indigo-500' : 'text-green-700'}`}>
@@ -241,12 +359,14 @@ export default function Search({ conversationId }: SearchProps) {
                   <h1>{msg.content}</h1>
                 ) : null}
               </div>
-              {isLoading && (
-                <h1>Loading...</h1>
-              )}
-              {!isUser && msg.content && !isLoading && (
+              {/* Always render the assistant message container, even if content is empty */}
+              {!isUser && (
                 <div className="prose max-w-none">
-                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  {isLoading || (isLastAssistant && streaming && !msg.content) ? (
+                    <span className="animate-pulse text-gray-400">Thinking<span className="animate-blink">...</span></span>
+                  ) : (
+                    <ReactMarkdown>{msg.content || ""}</ReactMarkdown>
+                  )}
                 </div>
               )}
             </div>

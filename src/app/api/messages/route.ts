@@ -11,6 +11,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { conversation_id, role, content } = await req.json();
+  console.log('Adding message:', { conversation_id, role, content });
   if (!conversation_id || !role || !content) {
     return NextResponse.json({ error: 'conversation_id, role, and content are required' }, { status: 400 });
   }
