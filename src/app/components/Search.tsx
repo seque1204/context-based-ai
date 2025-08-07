@@ -14,6 +14,11 @@ interface SearchProps {
   onNewConversation?: (id: string) => void;
 }
 
+interface Message {
+  role: string;
+  content: string;
+}
+
 export default function Search({ conversationId, onNewConversation }: SearchProps) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -27,10 +32,6 @@ export default function Search({ conversationId, onNewConversation }: SearchProp
 
   // Ref to cancel streaming if user switches chats
   const cancelStreamRef = useRef(false);
-  interface Message {
-    role: string;
-    content: string;
-  }
 
   const supabase = createClient();
   // Ref for auto-scroll
@@ -125,7 +126,7 @@ export default function Search({ conversationId, onNewConversation }: SearchProp
     }
 
     cancelStreamRef.current = false;
-
+    
     if (isNewChat) {
       // 1. Generate title
       const titleRes = await fetch("/api/generate-title", {
@@ -318,75 +319,106 @@ export default function Search({ conversationId, onNewConversation }: SearchProp
     setLoading(false);
     setPending(false);
   };
-
+  
+  // --- UI ---
+  
   if (isNewChat) {
     return (
-      <div className="flex flex-col h-full w-full items-center justify-center">
-        <div className="text-gray-400 text-lg mb-4">Start a new conversation</div>
-        <Input
-          ref={inputRef}
-          placeholder="Ask me a question"
-          className="p-5 w-full max-w-md"
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleSearch();
-            }
-          }}
-        />
+      <div className="flex flex-col h-full w-full items-center justify-center bg-slate-800/60 backdrop-blur-2xl rounded-r-3xl shadow-2xl shadow-cyan-900/20 border-l border-cyan-500/20">
+        <div className="text-cyan-300 text-lg mb-4">Start a new conversation</div>
+        <div className="w-full max-w-md">
+          <Input
+            ref={inputRef}
+            placeholder="Ask me a question"
+            className="p-5 w-full rounded-xl bg-white/10 text-cyan-100 placeholder-cyan-300 border border-cyan-400/10 focus:ring-2 focus:ring-cyan-400/30"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleSearch();
+              }
+            }}
+            disabled={loading || pending}
+          />
+        </div>
       </div>
     );
   }
+
   return (
-    <div className="flex flex-col h-full w-full">
-      <div className="flex items-center justify-between border-b pb-3 px-2">
-        <div className="flex items-center gap-2">
-          <SiAseprite className="w-5 h-5" />
-          <h1>CustomAI</h1>
+    <div className="flex flex-col h-full w-full bg-slate-800/60 backdrop-blur-2xl rounded-r-3xl shadow-2xl shadow-cyan-900/20 border-l border-cyan-500/20 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-cyan-500/10 bg-slate-900/60">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-xl flex items-center justify-center shadow">
+            <SiAseprite className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-xl font-bold text-cyan-100 tracking-wide">CustomAI</span>
         </div>
-        <Button onClick={handleLogout}> Logout </Button>
+        <Button
+          className="bg-white text-cyan-700 font-semibold rounded-xl shadow-md hover:bg-cyan-50 transition-all duration-200 border border-cyan-100 px-4 py-2"
+          onClick={handleLogout}
+        >
+          Logout
+        </Button>
       </div>
-      <div className="flex-1 overflow-y-auto space-y-10 px-2 py-4">
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 scrollbar-fade">
         {messages.map((msg, index) => {
           const isUser = msg.role === 'user';
-          // Only show loading for the last assistant message with empty content and while loading
           const isLastAssistant = msg.role === 'assistant' && index === messages.length - 1;
           const isLoading = loading && isLastAssistant && !msg.content;
           return (
-            <div className="space-y-3" key={index}>
-              <div className={`flex items-center gap-2 ${isUser ? 'text-indigo-500' : 'text-green-700'}`}>
-                <SiAseprite className="w-5 h-5" />
+            <div key={index} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+              <div
+                className={`
+                  max-w-lg px-5 py-4 rounded-2xl shadow
+                  ${isUser
+                    ? "bg-cyan-500/20 text-cyan-100 rounded-br-sm"
+                    : "bg-white/10 text-slate-100 border border-cyan-400/10 rounded-bl-sm"}
+                  ${isUser ? "ml-auto" : "mr-auto"}
+                  transition
+                `}
+              >
                 {isUser ? (
-                  <h1>{msg.content}</h1>
-                ) : null}
+                  <span className="whitespace-pre-line">{msg.content}</span>
+                ) : (
+                  <div className="prose prose-invert max-w-none">
+                    {isLoading || (isLastAssistant && streaming && !msg.content) ? (
+                      <span className="animate-pulse text-cyan-300">Thinking<span className="animate-blink">...</span></span>
+                    ) : (
+                      <ReactMarkdown>{msg.content || ""}</ReactMarkdown>
+                    )}
+                  </div>
+                )}
               </div>
-              {/* Always render the assistant message container, even if content is empty */}
-              {!isUser && (
-                <div className="prose max-w-none">
-                  {isLoading || (isLastAssistant && streaming && !msg.content) ? (
-                    <span className="animate-pulse text-gray-400">Thinking<span className="animate-blink">...</span></span>
-                  ) : (
-                    <ReactMarkdown>{msg.content || ""}</ReactMarkdown>
-                  )}
-                </div>
-              )}
             </div>
           );
         })}
-        {/* Auto-scroll anchor */}
         <div ref={bottomRef} />
       </div>
-      <div className="border-t px-2 bg-white">
+
+      {/* Input */}
+      <form
+        onSubmit={e => {
+          e.preventDefault();
+          handleSearch();
+        }}
+        className="flex items-center gap-3 px-6 py-5 border-t border-cyan-500/10 bg-slate-900/60"
+      >
         <Input
           ref={inputRef}
           placeholder="Ask me a question"
-          className="p-5"
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleSearch();
-            }
-          }}
+          className="flex-1 bg-white/10 text-cyan-100 placeholder-cyan-300 rounded-xl px-4 py-3 border border-cyan-400/10 focus:outline-none focus:ring-2 focus:ring-cyan-400/30 transition"
+          disabled={loading || pending}
         />
-      </div>
+        <Button
+          type="submit"
+          className="bg-cyan-500 hover:bg-cyan-400 text-white font-bold rounded-xl px-5 py-3 shadow transition"
+          disabled={loading || pending}
+        >
+          Send
+        </Button>
+      </form>
     </div>
   );
 }

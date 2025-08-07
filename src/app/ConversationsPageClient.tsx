@@ -9,13 +9,11 @@ export default function ConversationsPageClient() {
   const handleNew = (id: string) => setSelectedId(id);
 
   return (
-    <div className="h-screen flex justify-center">
-      <div className="max-w-5xl w-full h-80vh rounded-sm shadow-sm border flex flex-row p-0 ">
-        <Conversations selectedId={selectedId} onSelect={handleSelect} onNew={() => setSelectedId(null)} />
-        <div className="flex-1 p-5">
-          <Search conversationId={selectedId} onNewConversation={setSelectedId}/>
-        </div>
-      </div>
+  <div className="h-screen flex">
+    <Conversations selectedId={selectedId} onSelect={handleSelect} onNew={() => setSelectedId(null)} />
+    <div className="flex-1">
+      <Search conversationId={selectedId} onNewConversation={setSelectedId}/>
     </div>
-  );
+  </div>
+);
 }

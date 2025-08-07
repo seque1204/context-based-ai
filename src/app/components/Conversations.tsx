@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Button } from '@/components/ui/button';
+import { MessageCirclePlus } from "lucide-react"; // Optional: modern icon
 
 interface Conversation {
   id: string;
@@ -36,33 +37,53 @@ export default function Conversations({ selectedId, onSelect, onNew }: Conversat
   }
 
   return (
-    <div className="w-64 border-r h-full flex flex-col">
-      <div className="flex items-center justify-between p-3 border-b">
-        <span className="font-bold">Conversations</span>
-        <Button size="sm" onClick={handleNewConversation}>
-          +
+    <aside className="w-72 h-full flex flex-col bg-slate-800/60 backdrop-blur-xl border-r border-cyan-500/20 rounded-l-3xl shadow-2xl shadow-cyan-900/20 overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-4 border-b border-cyan-500/10 bg-slate-900/60">
+        <div className="flex items-center gap-2">
+          <MessageCirclePlus className="w-5 h-5 text-cyan-400" />
+          <span className="font-bold text-cyan-100 tracking-wide text-lg">Conversations</span>
+        </div>
+        <Button
+          size="icon"
+          variant="ghost"
+          className="rounded-full bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-400/10 shadow transition"
+          onClick={handleNewConversation}
+          aria-label="New Conversation"
+        >
+          <MessageCirclePlus className="w-5 h-5" />
         </Button>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      {/* Conversation List */}
+      <div className="flex-1 overflow-y-auto py-2 px-1 scrollbar-fade">
         {loading ? (
-          <div className="p-3 text-gray-500">Loading...</div>
+          <div className="p-4 text-cyan-300/70 text-center text-sm">Loading...</div>
         ) : conversations.length === 0 ? (
-          <div className="p-3 text-gray-500">No conversations</div>
+          <div className="p-4 text-cyan-300/70 text-center text-sm">No conversations</div>
         ) : (
-          <ul>
+          <ul className="space-y-1">
             {conversations.map((conv) => (
               <li
                 key={conv.id}
-                className={`p-3 cursor-pointer hover:bg-gray-100 ${selectedId === conv.id ? "bg-gray-200" : ""}`}
+                className={`
+                  group p-3 rounded-xl cursor-pointer transition
+                  ${selectedId === conv.id
+                    ? "bg-cyan-900/40 border border-cyan-400/30 shadow-inner"
+                    : "hover:bg-cyan-900/20"}
+                `}
                 onClick={() => onSelect(conv.id)}
               >
-                <div className="font-medium truncate">{conv.title}</div>
-                <div className="text-xs text-gray-500">{new Date(conv.updated_at).toLocaleString()}</div>
+                <div className="font-medium truncate text-cyan-100 group-hover:text-cyan-300">
+                  {conv.title}
+                </div>
+                <div className="text-xs text-cyan-300/60 mt-1">
+                  {new Date(conv.updated_at).toLocaleString()}
+                </div>
               </li>
             ))}
           </ul>
         )}
       </div>
-    </div>
+    </aside>
   );
 }

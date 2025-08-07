@@ -120,3 +120,57 @@
     @apply bg-background text-foreground;
   }
 }
+
+.hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Webkit */
+}
+
+.modern-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #22d3ee #1e293b;
+}
+.modern-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  background: transparent;
+}
+.modern-scrollbar::-webkit-scrollbar-thumb {
+  background: #22d3ee;
+  border-radius: 6px;
+}
+
+.scrollbar-fade {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.3s;
+}
+.scrollbar-fade:hover,
+.scrollbar-fade:focus,
+.scrollbar-fade:active {
+  scrollbar-color: #22d3ee #1e293b;
+}
+
+/* For Webkit browsers */
+.scrollbar-fade::-webkit-scrollbar {
+  width: 8px;
+  background: transparent;
+  transition: background 0.3s;
+}
+.scrollbar-fade:hover::-webkit-scrollbar,
+.scrollbar-fade:focus::-webkit-scrollbar,
+.scrollbar-fade:active::-webkit-scrollbar {
+  background: #1e293b;
+}
+.scrollbar-fade::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 8px;
+  transition: background 0.3s;
+}
+.scrollbar-fade:hover::-webkit-scrollbar-thumb,
+.scrollbar-fade:focus::-webkit-scrollbar-thumb,
+.scrollbar-fade:active::-webkit-scrollbar-thumb {
+  background: #22d3ee;
+}
