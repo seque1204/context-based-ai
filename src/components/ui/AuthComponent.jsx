@@ -2,6 +2,7 @@
 import { signInWithGoogle } from '@/app/login/actions'
 import { Button } from '@/components/ui/button'
 import { Chrome } from 'lucide-react'
+import { SiAseprite } from 'react-icons/si'
 
 export default function AuthComponent() {
   return (
@@ -16,32 +17,30 @@ export default function AuthComponent() {
           {/* Header */}
           <div className="text-center mb-10">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-2xl mb-6 shadow-lg shadow-cyan-500/25">
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <div className="w-4 h-4 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-sm" />
-              </div>
+              <SiAseprite className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-3xl font-extrabold text-white mb-2 tracking-tight">
               Welcome Back
             </h1>
             <p className="text-slate-300 text-base leading-relaxed">
-              Sign in to your account to continue building amazing projects
+              Sign in to your account
             </p>
           </div>
 
           {/* Login Form */}
           <div className="space-y-7">
             <form action={signInWithGoogle} className="w-full">
-              <Button 
+              <Button
                 type="submit"
                 className="w-full h-12 bg-white text-cyan-700 font-semibold rounded-xl shadow-md hover:bg-cyan-50 transition-all duration-200 flex items-center justify-center gap-3 border border-cyan-100"
               >
                 {/* Google SVG */}
                 <svg className="w-5 h-5" viewBox="0 0 48 48">
                   <g>
-                    <path fill="#4285F4" d="M24 9.5c3.54 0 6.73 1.22 9.24 3.23l6.92-6.92C36.68 2.7 30.73 0 24 0 14.82 0 6.73 5.8 2.69 14.09l8.06 6.26C12.7 13.23 17.88 9.5 24 9.5z"/>
-                    <path fill="#34A853" d="M46.1 24.55c0-1.64-.15-3.21-.43-4.73H24v9.01h12.41c-.54 2.9-2.18 5.36-4.65 7.01l7.19 5.6C43.98 37.13 46.1 31.38 46.1 24.55z"/>
-                    <path fill="#FBBC05" d="M10.75 28.35A14.5 14.5 0 0 1 9.5 24c0-1.52.25-2.99.7-4.35l-8.06-6.26A23.97 23.97 0 0 0 0 24c0 3.77.9 7.34 2.49 10.46l8.26-6.11z"/>
-                    <path fill="#EA4335" d="M24 48c6.48 0 11.93-2.14 15.9-5.84l-7.19-5.6c-2.01 1.35-4.59 2.16-8.71 2.16-6.12 0-11.3-3.73-13.25-9.01l-8.26 6.11C6.73 42.2 14.82 48 24 48z"/>
+                    <path fill="#4285F4" d="M24 9.5c3.54 0 6.73 1.22 9.24 3.23l6.92-6.92C36.68 2.7 30.73 0 24 0 14.82 0 6.73 5.8 2.69 14.09l8.06 6.26C12.7 13.23 17.88 9.5 24 9.5z" />
+                    <path fill="#34A853" d="M46.1 24.55c0-1.64-.15-3.21-.43-4.73H24v9.01h12.41c-.54 2.9-2.18 5.36-4.65 7.01l7.19 5.6C43.98 37.13 46.1 31.38 46.1 24.55z" />
+                    <path fill="#FBBC05" d="M10.75 28.35A14.5 14.5 0 0 1 9.5 24c0-1.52.25-2.99.7-4.35l-8.06-6.26A23.97 23.97 0 0 0 0 24c0 3.77.9 7.34 2.49 10.46l8.26-6.11z" />
+                    <path fill="#EA4335" d="M24 48c6.48 0 11.93-2.14 15.9-5.84l-7.19-5.6c-2.01 1.35-4.59 2.16-8.71 2.16-6.12 0-11.3-3.73-13.25-9.01l-8.26 6.11C6.73 42.2 14.82 48 24 48z" />
                   </g>
                 </svg>
                 Continue with Google

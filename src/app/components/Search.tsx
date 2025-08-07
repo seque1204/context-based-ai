@@ -18,6 +18,87 @@ interface Message {
   role: string;
   content: string;
 }
+function ChatHeader() {
+  return (
+    <div className="flex items-center gap-3 px-6 py-6">
+      <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-xl flex items-center justify-center shadow">
+        <SiAseprite className="w-5 h-5 text-white" />
+      </div>
+      <span className="text-2xl font-bold text-cyan-100 tracking-wide">CustomAI</span>
+    </div>
+  );
+}
+
+function ChatMessages({ messages, bottomRef, loading, streaming }: any) {
+  return (
+    <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 scrollbar-fade">
+      {messages.map((msg: any, idx: number) => {
+        const isAssistant = msg.role === "assistant";
+        const isLastAssistant = isAssistant && idx === messages.length - 1;
+        const isLoading = isLastAssistant && (loading || streaming) && !msg.content;
+
+        return (
+          <div
+            key={idx}
+            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+          >
+            <div
+              className={`
+    px-5 py-4 rounded-2xl shadow
+    max-w-2xl
+    ${msg.role === "user"
+                  ? "bg-cyan-500/20 text-cyan-100 rounded-br-sm ml-auto"
+                  : "bg-white/10 text-slate-100 border border-cyan-400/10 rounded-bl-sm mr-auto"}
+    transition
+  `}
+              style={{ minWidth: 0 }}
+            >
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <svg className="animate-spin h-5 w-5 text-cyan-400" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                  <span className="text-cyan-300">Thinking...</span>
+                </div>
+              ) : (
+                <span className="whitespace-pre-line">{msg.content}</span>
+              )}
+            </div>
+          </div>
+        );
+      })}
+      <div ref={bottomRef} />
+    </div>
+  );
+}
+
+function ChatInput({ inputRef, onSend, loading, pending }: any) {
+  return (
+    <form
+      onSubmit={e => {
+        e.preventDefault();
+        onSend();
+      }}
+      className="flex items-center gap-3 px-6 py-5"
+    >
+      <input
+        ref={inputRef}
+        placeholder="Ask me a question"
+        className="flex-1 bg-white/10 text-cyan-100 placeholder-cyan-300 rounded-xl px-4 py-3 border border-cyan-400/10 focus:outline-none focus:ring-2 focus:ring-cyan-400/30 transition"
+        disabled={loading || pending}
+      />
+      <button
+        type="submit"
+        className="bg-cyan-500 hover:bg-cyan-400 text-white font-bold rounded-xl px-5 py-3 shadow transition"
+        disabled={loading || pending}
+      >
+        Send
+      </button>
+    </form>
+  );
+}
+
 
 export default function Search({ conversationId, onNewConversation }: SearchProps) {
   const router = useRouter();
@@ -126,7 +207,7 @@ export default function Search({ conversationId, onNewConversation }: SearchProp
     }
 
     cancelStreamRef.current = false;
-    
+
     if (isNewChat) {
       // 1. Generate title
       const titleRes = await fetch("/api/generate-title", {
@@ -319,25 +400,37 @@ export default function Search({ conversationId, onNewConversation }: SearchProp
     setLoading(false);
     setPending(false);
   };
-  
+
   // --- UI ---
-  
+
   if (isNewChat) {
     return (
       <div className="flex flex-col h-full w-full items-center justify-center bg-slate-800/60 backdrop-blur-2xl rounded-r-3xl shadow-2xl shadow-cyan-900/20 border-l border-cyan-500/20">
-        <div className="text-cyan-300 text-lg mb-4">Start a new conversation</div>
-        <div className="w-full max-w-md">
-          <Input
-            ref={inputRef}
-            placeholder="Ask me a question"
-            className="p-5 w-full rounded-xl bg-white/10 text-cyan-100 placeholder-cyan-300 border border-cyan-400/10 focus:ring-2 focus:ring-cyan-400/30"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleSearch();
-              }
-            }}
-            disabled={loading || pending}
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-16 h-16 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/25 mb-4">
+            <SiAseprite className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-cyan-100 ">Welcome to CustomAi</h2>
+          <p className="text-cyan-300 text-center mt-2">
+            Start a new conversation by asking me anything!
+          </p>
+        </div>
+        <div className="w-full max-w-4xl">
+          <ChatInput
+            inputRef={inputRef}
+            onSend={handleSearch}
+            loading={loading}
+            pending={pending}
           />
+          {(loading || pending) && (
+            <div className="flex items-center justify-center mt-4 text-cyan-300">
+              <svg className="animate-spin h-5 w-5 mr-2 text-cyan-400" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+              </svg>
+              Working...
+            </div>
+          )}
         </div>
       </div>
     );
@@ -345,80 +438,21 @@ export default function Search({ conversationId, onNewConversation }: SearchProp
 
   return (
     <div className="flex flex-col h-full w-full bg-slate-800/60 backdrop-blur-2xl rounded-r-3xl shadow-2xl shadow-cyan-900/20 border-l border-cyan-500/20 overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-cyan-500/10 bg-slate-900/60">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-xl flex items-center justify-center shadow">
-            <SiAseprite className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-xl font-bold text-cyan-100 tracking-wide">CustomAI</span>
-        </div>
-        <Button
-          className="bg-white text-cyan-700 font-semibold rounded-xl shadow-md hover:bg-cyan-50 transition-all duration-200 border border-cyan-100 px-4 py-2"
-          onClick={handleLogout}
-        >
-          Logout
-        </Button>
-      </div>
-
+      <ChatHeader />
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 scrollbar-fade">
-        {messages.map((msg, index) => {
-          const isUser = msg.role === 'user';
-          const isLastAssistant = msg.role === 'assistant' && index === messages.length - 1;
-          const isLoading = loading && isLastAssistant && !msg.content;
-          return (
-            <div key={index} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-              <div
-                className={`
-                  max-w-lg px-5 py-4 rounded-2xl shadow
-                  ${isUser
-                    ? "bg-cyan-500/20 text-cyan-100 rounded-br-sm"
-                    : "bg-white/10 text-slate-100 border border-cyan-400/10 rounded-bl-sm"}
-                  ${isUser ? "ml-auto" : "mr-auto"}
-                  transition
-                `}
-              >
-                {isUser ? (
-                  <span className="whitespace-pre-line">{msg.content}</span>
-                ) : (
-                  <div className="prose prose-invert max-w-none">
-                    {isLoading || (isLastAssistant && streaming && !msg.content) ? (
-                      <span className="animate-pulse text-cyan-300">Thinking<span className="animate-blink">...</span></span>
-                    ) : (
-                      <ReactMarkdown>{msg.content || ""}</ReactMarkdown>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-        <div ref={bottomRef} />
-      </div>
+      <ChatMessages
+        messages={messages}
+        bottomRef={bottomRef}
+        loading={loading}
+        streaming={streaming}
+      />
+      <ChatInput
+        inputRef={inputRef}
+        onSend={handleSearch}
+        loading={loading || pending}
+        pending={pending}
+      />
 
-      {/* Input */}
-      <form
-        onSubmit={e => {
-          e.preventDefault();
-          handleSearch();
-        }}
-        className="flex items-center gap-3 px-6 py-5 border-t border-cyan-500/10 bg-slate-900/60"
-      >
-        <Input
-          ref={inputRef}
-          placeholder="Ask me a question"
-          className="flex-1 bg-white/10 text-cyan-100 placeholder-cyan-300 rounded-xl px-4 py-3 border border-cyan-400/10 focus:outline-none focus:ring-2 focus:ring-cyan-400/30 transition"
-          disabled={loading || pending}
-        />
-        <Button
-          type="submit"
-          className="bg-cyan-500 hover:bg-cyan-400 text-white font-bold rounded-xl px-5 py-3 shadow transition"
-          disabled={loading || pending}
-        >
-          Send
-        </Button>
-      </form>
     </div>
   );
 }
