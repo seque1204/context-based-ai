@@ -7,7 +7,8 @@ import React, { useRef, useState, useEffect } from 'react'
 import { SiAseprite } from "react-icons/si";
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
-
+import remarkGfm from 'remark-gfm';
+import remarkBreaks from 'remark-breaks';
 
 interface SearchProps {
   conversationId: string | null;
@@ -40,31 +41,58 @@ function ChatMessages({ messages, bottomRef, loading, streaming }: any) {
         return (
           <div
             key={idx}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+            className={`flex ${msg.role === "user" ? "justify-end" : "justify-center"}`}
           >
-            <div
-              className={`
-    px-5 py-4 rounded-2xl shadow
-    max-w-2xl
-    ${msg.role === "user"
-                  ? "bg-cyan-500/20 text-cyan-100 rounded-br-sm ml-auto"
-                  : "bg-white/10 text-slate-100 border border-cyan-400/10 rounded-bl-sm mr-auto"}
-    transition
-  `}
-              style={{ minWidth: 0 }}
-            >
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <svg className="animate-spin h-5 w-5 text-cyan-400" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                  </svg>
-                  <span className="text-cyan-300">Thinking...</span>
+            {isAssistant ? (
+              <div className="w-full flex justify-center">
+                <div className="max-w-4xl mx-auto p-4 text-white text-xl leading-relaxed">
+                  {isLoading ? (
+                    <div className="text-slate-100 leading-relaxed flex items-center space-x-2">
+                      <svg
+                        className="animate-spin h-5 w-5 text-cyan-400"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8z"
+                        />
+                      </svg>
+                      <span>Thinking...</span>
+                    </div>
+                  ) : (
+                    <div className="prose prose-invert max-w-none break-words
+                                    prose-h2:text-2xl prose-h2:font-semibold prose-h2:mt-6 prose-h2:mb-3
+                                    prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-5 prose-h3:mb-2
+                                    prose-p:leading-relaxed prose-li:my-1">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm, remarkBreaks]}
+                        skipHtml
+                      >
+                        {msg.content}
+                      </ReactMarkdown>
+                    </div>
+                  )}
                 </div>
-              ) : (
+              </div>
+            ) : (
+              <div
+                className="px-5 py-4 rounded-2xl shadow max-w-2xl
+                           bg-cyan-500/20 text-cyan-100 rounded-br-sm ml-auto text-xl leading-relaxed"
+                style={{ minWidth: 0 }}
+              >
                 <span className="whitespace-pre-line">{msg.content}</span>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         );
       })}
@@ -72,6 +100,7 @@ function ChatMessages({ messages, bottomRef, loading, streaming }: any) {
     </div>
   );
 }
+
 
 function ChatInput({ inputRef, onSend, loading, pending }: any) {
   return (
@@ -225,13 +254,21 @@ export default function Search({ conversationId, onNewConversation }: SearchProp
       });
       const { id: newConvId } = await convRes.json();
 
+      // Notify the sidebar immediately
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('conversation:created', {
+          detail: { id: newConvId, title }
+        }));
+      }
+
+
       // 3. Store the pending message and notify parent
       setPendingMessage(searchText);
       if (onNewConversation && typeof newConvId === 'string') {
         onNewConversation(newConvId);
         setPending(false);
         setLoading(false);
-        return; // Wait for conversationId to update, then auto-submit
+        return;
       }
     }
     // GUARD: If convId is still not set, abort
@@ -396,6 +433,13 @@ export default function Search({ conversationId, onNewConversation }: SearchProp
         content: streamedAnswer,
       }),
     });
+
+    // notify sidebar to re-sort by updated_at
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('conversation:updated', {
+        detail: { id: convId }
+      }));
+    }
     // After saving assistant message to DB
     setLoading(false);
     setPending(false);

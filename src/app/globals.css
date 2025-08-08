@@ -174,3 +174,15 @@
 .scrollbar-fade:active::-webkit-scrollbar-thumb {
   background: #22d3ee;
 }
+
+.prose-invert ul {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+}
+.prose-invert li::marker {
+  color: #22d3ee; /* cyan-400 */
+}
+
+.prose p {
+  margin-bottom: 0.75rem;
+}

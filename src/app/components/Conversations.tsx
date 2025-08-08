@@ -71,7 +71,7 @@ function SidebarChatsList({
   loading: boolean;
 }) {
   return (
-    <div className="flex-1 overflow-y-auto py-2 px-1 scrollbar-fade">
+    <div className="flex-1 overflow-y-auto py-2 px-1 hide-scrollbar">
       {loading ? (
         <div className="p-4 text-cyan-300/70 text-center text-sm">Loading...</div>
       ) : conversations.length === 0 ? (
@@ -158,9 +158,16 @@ export default function Conversations({ selectedId, onSelect, onNew }: Conversat
     fetchConversations();
   }, []);
 
+  // Refresh the list when a new conversation is created elsewhere
+  useEffect(() => {
+    const onCreated = () => { fetchConversations(); };
+    window.addEventListener('conversation:created', onCreated);
+    return () => window.removeEventListener('conversation:created', onCreated);
+  }, []);
+
   async function fetchConversations() {
     setLoading(true);
-    const res = await fetch("/api/conversations");
+    const res = await fetch("/api/conversations", { cache: "no-store" });
     const data = await res.json();
     setConversations(data.conversations || []);
     setLoading(false);
