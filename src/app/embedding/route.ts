@@ -5,7 +5,18 @@ import OpenAi from "openai";
 const openai = new OpenAi({
     apiKey: process.env.OPENAI_API_KEY,
 });
-
+// Utility function to chunk text
+function chunkText(text: string, chunkSize = 1000, overlap = 200): string[] {
+    const chunks: string[] = [];
+    let start = 0;
+    while (start < text.length) {
+        const end = Math.min(start + chunkSize, text.length);
+        chunks.push(text.slice(start, end));
+        if (end === text.length) break;
+        start += chunkSize - overlap;
+    }
+    return chunks;
+}
 export async function POST(req: Request) {
     const cookieStore = await cookies();
     const authCookie = cookieStore.getAll().find(
@@ -29,18 +40,32 @@ export async function POST(req: Request) {
         );
     }
     try {
-        const result = await openai.embeddings.create({
-            input: request.text,
-            model: "text-embedding-3-small"
-        });
-        const embedding = result.data[0].embedding;
-        const token = result.usage.total_tokens;
+        // Chunk text by fixed size with overlap
+        const paragraphs = chunkText(request.text, 1000, 200);
+        
+        // Console log the first 4 chunks
+        console.log('First 4 chunks:', paragraphs.slice(0, 4));
+
+        const embeddings: number[][] = [];
+        let totalTokens = 0;
+
+        for (const paragraph of paragraphs) {
+            if (paragraph.trim().length < 10) continue;
+
+            const result = await openai.embeddings.create({
+                input: paragraph,
+                model: "text-embedding-3-small"
+            });
+            embeddings.push(result.data[0].embedding);
+            totalTokens += result.usage.total_tokens;
+        }
+
         return NextResponse.json({
-            embedding,
-            token,
+            embeddings,
+            token: totalTokens,
+            chunks: paragraphs,
         });
-    }
-    catch (error) {
+    } catch (error) {
         console.error('Error creating embedding:', error);
         return NextResponse.json(
             {

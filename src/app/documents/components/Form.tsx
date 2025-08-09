@@ -1,87 +1,54 @@
-"use client"
-import React, { useRef, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
+"use client";
+import { useState, useRef } from "react";
+import { Button } from "@/components/ui/button";
 import { LiaSpinnerSolid } from "react-icons/lia";
-import { createClient } from '@/utils/supabase/client';
-import { toast } from "sonner"
+import { toast } from "sonner";
 
-
-export default function Form() {
-    const [supabase] = useState(() => createClient());
-    const inputRef = useRef<HTMLTextAreaElement>(null);
+export default function UploadForm() {
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [loading, setLoading] = useState(false);
-    const showToast = (message: string, type: "success" | "error" = "success") => {
-        if (type === "error") {
-            toast("Error: " + message, { style: { background: "#f87171", color: "#fff" } });
-        } else {
-            toast(message, { style: { background: "#4ade80", color: "#fff" } });
-        }
-    };
-    const handleSubmit = async () => {
+
+    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
         setLoading(true);
-        const content = inputRef.current?.value;
-        if (content && content.trim()) {
-            const res = await fetch(location.origin + "/embedding", {
-                method: "POST",
-                body: JSON.stringify({ text: content.replace(/\n/g, " ") }),
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+        const formData = new FormData();
+        formData.append("file", file);
 
-            });
-
-            if (res.status !== 200) {
-                showToast("Failed to create embedding: " + res.statusText, "error");
-                console.error("Error submitting data:", res.statusText);
-                setLoading(false);
-                return;
-            } else {
-                const result = await res.json();
-                const embedding = result.embedding;
-                const token = result.token;
-                const client = await supabase;
-                const { data: { user } } = await client.auth.getUser();
-                const { data:  userRow }  = await client
-                    .from("users")
-                    .select("school_id")
-                    .eq("id", user?.id)
-                    .single();
-                const { error } = await client.from("documents").insert({
-                    content,
-                    embedding,
-                    token,
-                    user_id: user?.id,
-                    created_at : new Date().toISOString(),
-                    school_id : userRow?.school_id,
-                });
-
-                if (error) {
-                    showToast("Failed to insert data: " + error.message, "error");
-                } else {
-                    showToast("Data submitted successfully", "success");
-                    inputRef.current!.value = "";
-                }
-
-            }
-        }
+        const res = await fetch("/api/upload-document", {
+            method: "POST",
+            body: formData,
+        });
+        console.log("here")
         setLoading(false);
+
+        if (!res.ok) {
+            const { error } = await res.json();
+            toast(`Error: ${error}`, { style: { background: "#f87171", color: "#fff" } });
+        } else {
+            toast("Document uploaded & processed!", { style: { background: "#4ade80", color: "#fff" } });
+        }
+
     };
 
     return (
         <>
-            <Textarea
-                placeholder="Add your dataset"
-                className="h-96"
-                ref={inputRef}
+            <input
+                type="file"
+                accept="application/pdf"
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                onChange={handleUpload}
             />
             <Button
-                className="w-full"
-                onClick={handleSubmit}>
-                {loading && <LiaSpinnerSolid className="w-5 h-5 animate-spin" />}
-                submit
+                variant="outline"
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={loading}
+            >
+                {loading ? <LiaSpinnerSolid className="w-5 h-5 animate-spin" /> : "Import PDF"}
             </Button>
         </>
-    )
+    );
 }

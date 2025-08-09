@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { SiAseprite } from "react-icons/si";
-import { Plus, Search } from "lucide-react"; // Add at the top
+import { Plus, Search, ScrollText  } from "lucide-react"; // Add at the top
 import { LogOut, User } from "lucide-react"; // Optional: modern icon
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -31,6 +31,7 @@ function SidebarHeader() {
 }
 
 function SidebarActions({ onNew }: { onNew: () => void }) {
+  const router = useRouter();
   return (
     <div className="flex flex-col gap-2 px-4 py-4">
       <button
@@ -46,6 +47,13 @@ function SidebarActions({ onNew }: { onNew: () => void }) {
       >
         <Search className="w-4 h-4" />
         Search chats
+      </button>
+      <button 
+        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-cyan-500/10 text-cyan-200 transition font-medium"
+        onClick={() => router.push("/documents")}
+      >
+        <ScrollText className="w-4 h-4" />
+        Documents
       </button>
     </div>
   );
