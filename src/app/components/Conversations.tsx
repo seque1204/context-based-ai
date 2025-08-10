@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { Plus, Search, ScrollText  } from "lucide-react"; // Add at the top
+import { Plus, Search, ScrollText } from "lucide-react"; // Add at the top
 import { LogOut, User } from "lucide-react"; // Optional: modern icon
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -63,7 +63,7 @@ function SidebarActions({ onNew }: { onNew: () => void }) {
         <Search className="w-4 h-4" />
         Search chats
       </button>
-      <button 
+      <button
         className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-[#C5A572]/10 text-[#C5A572] transition font-medium"
         onClick={() => router.push("/documents")}
       >
@@ -127,22 +127,57 @@ function SidebarChatsList({
 }
 
 function SidebarUser() {
-  // Placeholder user info
-  const user = {
-    name: "John Smith",
-    organization: "Your Organization",
-    initials: "JS",
-  };
   const [open, setOpen] = React.useState(false);
-
-  // Replace with your logout logic
+  const [user, setUser] = React.useState({
+    name: "",
+    organization: "",
+    initials: "",
+    avatarUrl: "",
+  });
   const supabase = createClient();
   const router = useRouter();
+
+  // Logout Logic
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.refresh();
   };
 
+  React.useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: profile } = await supabase.auth.getUser();
+      if (profile && profile.user) {
+        const name = profile.user.user_metadata?.full_name || profile.user.user_metadata?.name || profile.user.email || "User";
+        const initials = name
+          .split(" ")
+          .map((n: string) => n[0])
+          .join("")
+          .toUpperCase();
+        const avatarUrl = profile.user.user_metadata?.avatar_url || "";
+
+        // Fetch org_id from public.users
+        let organization = "";
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('org_id')
+          .eq('id', profile.user.id)
+          .single();
+        if (!userError && userData && userData.org_id) {
+          // Fetch org_name from public.orgs
+          const { data: orgData, error: orgError } = await supabase
+            .from('orgs')
+            .select('org_name')
+            .eq('id', userData.org_id)
+            .single();
+          if (!orgError && orgData && orgData.org_name) {
+            organization = orgData.org_name;
+          }
+        }
+  setUser({ name, organization, initials, avatarUrl });
+      }
+    };
+    fetchProfile();
+  }, []);
   return (
     <div
       className="relative px-4 py-4 border-t border-[#C5A572]/10 bg-[#FAF7F2]"
@@ -150,9 +185,17 @@ function SidebarUser() {
       onMouseLeave={() => setOpen(false)}
     >
       <div className="flex items-center gap-3 w-full p-2 rounded-xl hover:bg-[#C5A572]/10 transition cursor-pointer">
-        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#C5A572] to-[#C5A574] flex items-center justify-center text-[#1A1A1A] font-bold text-lg">
-          {user.initials}
-        </div>
+        {user.avatarUrl ? (
+          <img
+            src={user.avatarUrl}
+            alt={user.name}
+            className="w-9 h-9 rounded-full object-cover border border-[#C5A572]/40"
+          />
+        ) : (
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#C5A572] to-[#C5A574] flex items-center justify-center text-[#1A1A1A] font-bold text-lg">
+            {user.initials}
+          </div>
+        )}
         <div className="flex flex-col items-start">
           <span className="font-medium text-[#1A1A1A]">{user.name}</span>
           <span className="text-xs text-[#C5A572]">{user.organization}</span>
