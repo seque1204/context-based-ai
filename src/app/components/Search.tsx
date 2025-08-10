@@ -311,6 +311,7 @@ export default function Search({ conversationId, onNewConversation }: SearchProp
     if (inputRef.current) inputRef.current.value = "";
 
     // 1. Get embedding
+    console.log("Searching text for embedding");
     const res = await fetch(location.origin + "/embedding", {
       method: "POST",
       body: JSON.stringify({ text: searchText.replace(/\n/g, " ") }),
@@ -338,14 +339,18 @@ export default function Search({ conversationId, onNewConversation }: SearchProp
     const data = await res.json();
 
     // 2. Get context documents
+    console.log("Embeddings: ", data.embedding);
+    const embedding = Array.isArray(data.embeddings) ? data.embeddings[0] : data.embedding;
+    console.log("Embedding: ", embedding);
     const { data: documents } = await supabase.rpc(
       "match_documents",
       {
-        query_embedding: data.embedding,
+        query_embedding: embedding,
         match_threshold: 0.35,
         match_count: 3,
       }
     );
+    console.log("Documents found:", documents);
     let tokenCount = 0;
     let contextText = "";
     for (let i = 0; i < (documents?.length || 0); i++) {
@@ -396,9 +401,7 @@ export default function Search({ conversationId, onNewConversation }: SearchProp
     while (!done) {
       const { value, done: doneReading } = await reader.read();
       done = doneReading;
-      console.log("Received chunk 1:", value, "cancelStreamRef.current:", cancelStreamRef.current);
       if (value && !cancelStreamRef.current) {
-        console.log("Received chunk 2:", value);
         streamedAnswerRef.current += decoder.decode(value);
         streamedAnswer = streamedAnswerRef.current;
         setMessages(prev => {

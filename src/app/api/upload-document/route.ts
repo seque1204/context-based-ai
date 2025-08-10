@@ -1,7 +1,6 @@
 export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
-import { PDFDocument } from "pdf-lib";
 import pdfParse from "pdf-parse";
 
 export async function POST(req: Request) {
