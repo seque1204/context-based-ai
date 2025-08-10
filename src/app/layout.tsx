@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "VICI",
   description: "The AI Assistant",
+  icons: {
+    icon: "/VICILogo.png"
+  }, 
 };
 
 export default function RootLayout({
