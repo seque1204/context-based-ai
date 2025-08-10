@@ -2,27 +2,26 @@
 import { signInWithGoogle } from '@/app/login/actions'
 import { Button } from '@/components/ui/button'
 import { Chrome } from 'lucide-react'
-import { SiAseprite } from 'react-icons/si'
-
+import Image from 'next/image'
 export default function AuthComponent() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-950">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-[#FAF7F2] via-[#C5A572]/10 to-[#C5A574]/30" style={{ fontFamily: 'Inter, Arial, sans-serif' }}>
       <div className="w-full max-w-md">
         {/* Main Login Card */}
-        <div className="bg-slate-800/60 backdrop-blur-2xl border border-cyan-500/20 rounded-3xl p-10 shadow-2xl shadow-cyan-900/30 relative overflow-hidden">
-          {/* Glassmorphism Glow */}
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-cyan-400/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="bg-[#FAF7F2] backdrop-blur-2xl border border-[#8B0000] rounded-3xl p-10 shadow-2xl shadow-[#C5A572]/20 relative overflow-hidden">
+          {/* Gold Glow */}
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#C5A572]/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-[#C5A574]/10 rounded-full blur-2xl pointer-events-none" />
 
           {/* Header */}
           <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-2xl mb-6 shadow-lg shadow-cyan-500/25">
-              <SiAseprite className="w-8 h-8 text-white" />
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#C5A572] to-[#C5A574] rounded-2xl mb-6 shadow-lg shadow-[#C5A572]/25">
+              <Image src="/VICILogo.png" alt="VICI Logo" width={56} height={56} className="w-14 h-14 object-contain" priority />
             </div>
-            <h1 className="text-3xl font-extrabold text-white mb-2 tracking-tight">
+            <h1 className="text-3xl font-extrabold text-[#1A1A1A] mb-2 tracking-tight" style={{ fontFamily: 'Cinzel, \"Times New Roman\", serif' }}>
               Welcome Back
             </h1>
-            <p className="text-slate-300 text-base leading-relaxed">
+            <p className="text-[#1A1A1A] text-base leading-relaxed" style={{ fontFamily: 'Inter, Arial, sans-serif' }}>
               Sign in to your account
             </p>
           </div>
@@ -32,7 +31,8 @@ export default function AuthComponent() {
             <form action={signInWithGoogle} className="w-full">
               <Button
                 type="submit"
-                className="w-full h-12 bg-white text-cyan-700 font-semibold rounded-xl shadow-md hover:bg-cyan-50 transition-all duration-200 flex items-center justify-center gap-3 border border-cyan-100"
+                className="w-full h-12 bg-[#C5A572] text-[#1A1A1A] font-semibold rounded-xl shadow-md hover:bg-[#C5A574]/80 transition-all duration-200 flex items-center justify-center gap-3 border border-[#C5A572]/30"
+                style={{ fontFamily: 'Inter, Arial, sans-serif' }}
               >
                 {/* Google SVG */}
                 <svg className="w-5 h-5" viewBox="0 0 48 48">
@@ -49,24 +49,24 @@ export default function AuthComponent() {
 
             {/* Divider */}
             <div className="relative flex items-center my-4">
-              <div className="flex-grow h-px bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent" />
-              <span className="px-4 bg-slate-800/80 text-cyan-400 font-medium rounded-full shadow text-xs tracking-wide border border-cyan-500/10">
+              <div className="flex-grow h-px bg-gradient-to-r from-transparent via-[#8B0000]/40 to-transparent" />
+              <span className="px-4 bg-[#FAF7F2] text-[#8B0000] font-medium rounded-full shadow text-xs tracking-wide border border-[#8B0000]/10" style={{ fontFamily: 'Inter, Arial, sans-serif' }}>
                 Secure authentication
               </span>
-              <div className="flex-grow h-px bg-gradient-to-l from-transparent via-cyan-500/40 to-transparent" />
+              <div className="flex-grow h-px bg-gradient-to-l from-transparent via-[#8B0000]/40 to-transparent" />
             </div>
           </div>
         </div>
 
         {/* Footer */}
         <div className="text-center mt-8">
-          <p className="text-slate-500 text-xs">
+          <p className="text-[#1A1A1A] text-xs" style={{ fontFamily: 'Inter, Arial, sans-serif' }}>
             By signing in, you agree to our{' '}
-            <a href="#" className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2 transition-colors">
+            <a href="#" className="text-[#C5A572] hover:text-[#8B0000] underline underline-offset-2 transition-colors">
               Terms of Service
             </a>{' '}
             and{' '}
-            <a href="#" className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2 transition-colors">
+            <a href="#" className="text-[#C5A572] hover:text-[#8B0000] underline underline-offset-2 transition-colors">
               Privacy Policy
             </a>
           </p>

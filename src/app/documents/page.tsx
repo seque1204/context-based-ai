@@ -1,8 +1,9 @@
 import React from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
-import { BsDatabase } from "react-icons/bs";
+import Image from "next/image";
 import Form from './components/Form';
+import { BsDatabase } from 'react-icons/bs';
 
 
 export default async function Page() {
@@ -15,7 +16,7 @@ export default async function Page() {
   }
 
   // const { data: user } = await supabase
-  //   .from("users")
+  //   .from("users") 
   //   .select("role")
   //   .eq("id", data.user.id)
   //   .single()
@@ -25,17 +26,17 @@ export default async function Page() {
   //   return redirect('/')
   // }
   return (
-  <div className="min-h-screen flex items-center justify-center bg-gray-50">
-    <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-xl space-y-6">
-      <div className="flex items-center gap-3 mb-4">
-        <BsDatabase className="w-6 h-6 text-blue-600" />
-        <h1 className="text-2xl font-bold text-gray-800">Daily AI Dataset</h1>
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #FAF7F2 0%, #C5A572 100%)', fontFamily: 'Inter, Arial, sans-serif' }}>
+      <div className="bg-[#FAF7F2] shadow-lg rounded-3xl p-10 w-full max-w-xl space-y-6 border border-[#C5A572]/30">
+        <div className="flex items-center gap-4 mb-4">
+          <BsDatabase className="w-12 h-12 text-[#C5A572]" />
+          <h1 className="text-2xl font-bold text-[#1A1A1A]" style={{ fontFamily: 'Cinzel, \"Times New Roman\", serif' }}>VICI Dataset</h1>
+        </div>
+        <p className="text-[#1A1A1A] mb-2" style={{ fontFamily: 'Inter, Arial, sans-serif' }}>
+          Upload a PDF to add it to your organization’s  dataset.
+        </p>
+        <Form />
       </div>
-      <p className="text-gray-500 mb-2">
-        Upload a PDF to add it to your organization’s AI dataset.
-      </p>
-      <Form />
     </div>
-  </div>
-);
+  );
 }

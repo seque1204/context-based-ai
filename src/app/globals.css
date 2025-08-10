@@ -45,7 +45,7 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
+  --background: #FAF7F2;
   --foreground: oklch(0.129 0.042 264.695);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
@@ -150,7 +150,7 @@
 .scrollbar-fade:hover,
 .scrollbar-fade:focus,
 .scrollbar-fade:active {
-  scrollbar-color: #22d3ee #1e293b;
+  scrollbar-color:  #8B0000 #C5A572;
 }
 
 /* For Webkit browsers */
@@ -172,7 +172,7 @@
 .scrollbar-fade:hover::-webkit-scrollbar-thumb,
 .scrollbar-fade:focus::-webkit-scrollbar-thumb,
 .scrollbar-fade:active::-webkit-scrollbar-thumb {
-  background: #22d3ee;
+  background: #C5A572;
 }
 
 .prose-invert ul {
@@ -180,7 +180,7 @@
   padding-left: 1.25rem;
 }
 .prose-invert li::marker {
-  color: #22d3ee; /* cyan-400 */
+  color: #C5A572; 
 }
 
 .prose p {

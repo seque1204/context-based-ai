@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input'
 import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import React, { useRef, useState, useEffect } from 'react'
-import { SiAseprite } from "react-icons/si";
+import Image from "next/image";
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -21,12 +21,12 @@ interface Message {
 }
 function ChatHeader() {
   return (
-    <div className="flex items-center gap-3 px-6 py-6">
-      <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-xl flex items-center justify-center shadow">
-        <SiAseprite className="w-5 h-5 text-white" />
+    <>
+      <div className="flex items-center gap-3 px-6 py-6">
+        <span className="text-2xl font-bold text-[#1A1A1A] tracking-wide" style={{ fontFamily: 'Cinzel, \"Times New Roman\", serif' }}>VICI</span>
       </div>
-      <span className="text-2xl font-bold text-cyan-100 tracking-wide">CustomAI</span>
-    </div>
+      <div className="mx-6 h-px bg-[#8B0000] opacity-20" />
+    </>
   );
 }
 
@@ -45,11 +45,11 @@ function ChatMessages({ messages, bottomRef, loading, streaming }: any) {
           >
             {isAssistant ? (
               <div className="w-full flex justify-center">
-                <div className="max-w-4xl mx-auto p-4 text-white text-xl leading-relaxed">
+                <div className="max-w-4xl mx-auto p-4 text-[#1A1A1A] text-xl leading-relaxed">
                   {isLoading ? (
-                    <div className="text-slate-100 leading-relaxed flex items-center space-x-2">
+                    <div className="text-[#1A1A1A] leading-relaxed flex items-center space-x-2">
                       <svg
-                        className="animate-spin h-5 w-5 text-cyan-400"
+                        className="animate-spin h-5 w-5 text-[#C5A572]"
                         viewBox="0 0 24 24"
                       >
                         <circle
@@ -86,9 +86,8 @@ function ChatMessages({ messages, bottomRef, loading, streaming }: any) {
               </div>
             ) : (
               <div
-                className="px-5 py-4 rounded-2xl shadow max-w-2xl
-                           bg-cyan-500/20 text-cyan-100 rounded-br-sm ml-auto text-xl leading-relaxed"
-                style={{ minWidth: 0 }}
+                className="px-5 py-4 rounded-2xl shadow max-w-2xl bg-[#C5A572] text-[#1A1A1A] rounded-br-sm ml-auto text-xl leading-relaxed"
+                style={{ minWidth: 0, fontFamily: 'Inter, Arial, sans-serif' }}
               >
                 <span className="whitespace-pre-line">{msg.content}</span>
               </div>
@@ -114,12 +113,14 @@ function ChatInput({ inputRef, onSend, loading, pending }: any) {
       <input
         ref={inputRef}
         placeholder="Ask me a question"
-        className="flex-1 bg-white/10 text-cyan-100 placeholder-cyan-300 rounded-xl px-4 py-3 border border-cyan-400/10 focus:outline-none focus:ring-2 focus:ring-cyan-400/30 transition"
+        className="flex-1 bg-[#FAF7F2] text-[#1A1A1A] placeholder-[#1A1A1A] rounded-xl px-4 py-3 border border-[#C5A572] focus:outline-none focus:ring-2 focus:ring-[#C5A572] transition"
+        style={{ fontFamily: 'Inter, Arial, sans-serif' }}
         disabled={loading || pending}
       />
       <button
         type="submit"
-        className="bg-cyan-500 hover:bg-cyan-400 text-white font-bold rounded-xl px-5 py-3 shadow transition"
+        className="bg-[#C5A572] hover:bg-[#C5A572] text-[#FAF7F2] font-bold rounded-xl px-5 py-3 shadow transition"
+        style={{ fontFamily: 'Inter, Arial, sans-serif' }}
         disabled={loading || pending}
       >
         Send
@@ -449,13 +450,14 @@ export default function Search({ conversationId, onNewConversation }: SearchProp
 
   if (isNewChat) {
     return (
-      <div className="flex flex-col h-full w-full items-center justify-center bg-slate-800/60 backdrop-blur-2xl rounded-r-3xl shadow-2xl shadow-cyan-900/20 border-l border-cyan-500/20">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-cyan-400 to-cyan-600 rounded-2xl flex items-center justify-center shadow-lg shadow-cyan-500/25 mb-4">
-            <SiAseprite className="w-8 h-8 text-white" />
+      // Search background
+      <div className="flex flex-col h-full w-full items-center justify-center backdrop-blur-2xl  shadow-2xl shadow border-l border--[#C5A572]">
+        <div className="flex flex-col items-center mb-8 ">
+          <div className="w-16 h-16 bg-gradient-to-br from-[#C5A572] to-[#C5A574] rounded-2xl flex items-center justify-center shadow-lg shadow mb-4">
+            <Image src="/VICILogo.png" alt="VICI Logo" width={48} height={48} className="w-12 h-12 object-contain" />
           </div>
-          <h2 className="text-2xl font-bold text-cyan-100 ">Welcome to CustomAi</h2>
-          <p className="text-cyan-300 text-center mt-2">
+          <h2 className="text-2xl font-bold text-[1A1A1A]" style={{ fontFamily: 'Cinzel, \"Times New Roman\", serif' }}>Welcome to VICI</h2>
+          <p className="text-[1A1A1A] text-center mt-2" style={{ fontFamily: 'Inter, Arial, sans-serif' }}>
             Start a new conversation by asking me anything!
           </p>
         </div>
@@ -467,8 +469,8 @@ export default function Search({ conversationId, onNewConversation }: SearchProp
             pending={pending}
           />
           {(loading || pending) && (
-            <div className="flex items-center justify-center mt-4 text-cyan-300">
-              <svg className="animate-spin h-5 w-5 mr-2 text-cyan-400" viewBox="0 0 24 24">
+            <div className="flex items-center justify-center mt-4 text-[#C5A572]" style={{ fontFamily: 'Inter, Arial, sans-serif' }}>
+              <svg className="animate-spin h-5 w-5 mr-2 text-[#C5A572]" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
               </svg>
@@ -481,7 +483,7 @@ export default function Search({ conversationId, onNewConversation }: SearchProp
   }
 
   return (
-    <div className="flex flex-col h-full w-full bg-slate-800/60 backdrop-blur-2xl rounded-r-3xl shadow-2xl shadow-cyan-900/20 border-l border-cyan-500/20 overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-[#FAF7F2] backdrop-blur-2xl rounded-r-3xl shadow-2xl shadow border-l border-[#C5A572] overflow-hidden" style={{ fontFamily: 'Inter, Arial, sans-serif' }}>
       <ChatHeader />
       {/* Messages */}
       <ChatMessages
@@ -496,7 +498,6 @@ export default function Search({ conversationId, onNewConversation }: SearchProp
         loading={loading || pending}
         pending={pending}
       />
-
     </div>
   );
 }
