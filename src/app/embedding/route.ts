@@ -6,7 +6,7 @@ const openai = new OpenAi({
     apiKey: process.env.OPENAI_API_KEY,
 });
 // Utility function to chunk text
-function chunkText(text: string, chunkSize = 1000, overlap = 200): string[] {
+function chunkText(text: string, chunkSize = 10000, overlap = 200): string[] {
     const chunks: string[] = [];
     let start = 0;
     while (start < text.length) {
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     }
     try {
         // Chunk text by fixed size with overlap
-        const paragraphs = chunkText(request.text, 1000, 200);
+        const paragraphs = chunkText(request.text);
         
         // Console log the first 4 chunks
         console.log('First 4 chunks:', paragraphs.slice(0, 4));
