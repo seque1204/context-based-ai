@@ -23,6 +23,7 @@ function ChatHeader() {
   return (
     <>
       <div className="flex items-center gap-3 px-6 py-6">
+        <span className="w-4" />
         <span className="text-2xl font-bold text-[#1A1A1A] tracking-wide" style={{ fontFamily: 'Cinzel, \"Times New Roman\", serif' }}>VICI</span>
       </div>
       <div className="mx-6 h-px bg-[#8B0000] opacity-20" />
