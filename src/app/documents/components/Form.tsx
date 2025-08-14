@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { LiaSpinnerSolid } from "react-icons/lia";
 import { toast } from "sonner";
 
+
 export default function UploadForm() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [loading, setLoading] = useState(false);
@@ -20,7 +21,6 @@ export default function UploadForm() {
             method: "POST",
             body: formData,
         });
-        console.log("here")
         setLoading(false);
 
         if (!res.ok) {
